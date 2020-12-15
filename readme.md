@@ -44,4 +44,5 @@ To vary a parameter and obtain graphs of the results, have a look at the shell s
 
 ## Other files
 gen.py is used to generate in.txt
+
 Makefile just compiles, run ```make```
