@@ -16,6 +16,6 @@ while text != "done":
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(index, data)
 ax.set(title = "The 5 minute journal", xlabel = "Epoch", ylabel = "Accuracy")
-plt.savefig(f"results/Nodes/{nodes}.png")
+plt.savefig(f"results/LearningRate/{nodes}.png")
 # ax.plot(data)
 # plt.show()

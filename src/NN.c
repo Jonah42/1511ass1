@@ -26,7 +26,7 @@
 #define INPUT 875
 // #define HIDDEN1 300
 // #define HIDDEN2 100
-#define BIAS 2
+#define BIAS 3
 #define OUTPUT 10
 #define H 0.00001
 
@@ -34,8 +34,8 @@ int HIDDEN1;
 int HIDDEN2;
 
 int ** loadInput(char * inFile);
-double* runNN(double** w1, double** w2, double** out, double*bias, int ** data);
-void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, char expected, double learningRate);
+double* runNN(double** w1, double** w2, double** out, double** bias, int ** data);
+void trainNN(double** w1, double** w2, double** out, double** bias, int ** data, char expected, double learningRate);
 void printWeights(double** w1, double** w2, double** out, int count);
 
 int main(int argc, char * argv[]) {
@@ -61,12 +61,12 @@ int main(int argc, char * argv[]) {
 	double rateAdjustment = atof(argv[4]);
 	int batch = atoi(argv[5]);
 	//Print for graph generation what you want
-	printf("%d-%d\n", HIDDEN1, HIDDEN2);
+	printf("%lf\n", learningRate);
 	//Allocate weight matrices
 	double** w1 = malloc(HIDDEN1*sizeof(double*));
 	double** w2 = malloc(HIDDEN2*sizeof(double*));
 	double** out = malloc(OUTPUT*sizeof(double*));
-	double* bias = calloc(BIAS, sizeof(double)); //Bias initialised to 0
+	double** bias = malloc(BIAS*sizeof(double*));
 	if (w1 == NULL || w2 == NULL || out == NULL || bias == NULL) {
 		printf("Weight initialisation failed, exiting\n");
 		exit(0);
@@ -90,6 +90,10 @@ int main(int argc, char * argv[]) {
 		for (int j = 0; j < HIDDEN2; j++)
 			out[i][j] = ((rand()%1000)-500)/(scale);
 	}
+	// Bias initialised to 0
+	bias[0] = calloc(HIDDEN1, sizeof(double));
+	bias[1] = calloc(HIDDEN2, sizeof(double));
+	bias[2] = calloc(OUTPUT, sizeof(double));
 	//Now train/test at discretion of a script
 	//Usage: <action> <inputFile>
 	char action[100], inFile[100];
@@ -179,6 +183,8 @@ int main(int argc, char * argv[]) {
 	for (int i = 0; i < OUTPUT; i++)
 		free(out[i]);
 	free(out);
+	for (int i = 0;  i < BIAS; i++)
+		free(bias[i]);
 	free(bias);
 	printf("done\n");
 	return 0;
@@ -226,13 +232,13 @@ void printWeights(double** w1, double** w2, double** out, int count) {
 }
 
 //Applies the data to the NN
-double* runNN(double** w1, double** w2, double** out, double*bias, int ** data) {
+double* runNN(double** w1, double** w2, double** out, double** bias, int ** data) {
 	double* result = malloc(OUTPUT*sizeof(double));
 	// First matrix multiplication: Data*w1
 	double * res1 = malloc(HIDDEN1*sizeof(double));
 	double sum;
 	for (int row = 0; row < HIDDEN1; row++) {
-		sum = bias[0];
+		sum = bias[0][row];
 		for (int col = 0; col < INPUT; col++) {
 			sum += data[col/SUBWIDTH][col%SUBWIDTH]*w1[row][col];
 		}
@@ -241,7 +247,7 @@ double* runNN(double** w1, double** w2, double** out, double*bias, int ** data) 
 	// Second matrix multiplication: *w2
 	double * res2 = malloc(HIDDEN2*sizeof(double));
 	for (int row = 0; row < HIDDEN2; row++) {
-		sum = bias[1];
+		sum = bias[1][row];
 		for (int col = 0; col < HIDDEN1; col++) {
 			sum += res1[col]*w2[row][col];
 		}
@@ -251,7 +257,7 @@ double* runNN(double** w1, double** w2, double** out, double*bias, int ** data) 
 	double* res3 = malloc(OUTPUT*sizeof(double));
 	double total = 0;
 	for (int row = 0; row < OUTPUT; row++) {
-		sum = 0;
+		sum = bias[2][row];
 		for (int col = 0; col < HIDDEN2; col++) {
 			sum += res2[col]*out[row][col];
 		}
@@ -269,7 +275,7 @@ double* runNN(double** w1, double** w2, double** out, double*bias, int ** data) 
 }
 
 // Trains the NN
-void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, char expected, double learningRate) {
+void trainNN(double** w1, double** w2, double** out, double** bias, int ** data, char expected, double learningRate) {
 
 	double* result = malloc(OUTPUT*sizeof(double));
 	double* result_e = malloc(OUTPUT*sizeof(double));
@@ -279,7 +285,7 @@ void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, c
 	double * res1 = malloc(HIDDEN1*sizeof(double));
 	double * deriv1 = malloc(HIDDEN1*sizeof(double));
 	for (int row = 0; row < HIDDEN1; row++) {
-		sum = bias[0];
+		sum = bias[0][row];
 		for (int col = 0; col < INPUT; col++) {
 			sum += data[col/SUBWIDTH][col%SUBWIDTH]*w1[row][col];
 		}
@@ -291,7 +297,7 @@ void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, c
 	double * res2 = malloc(HIDDEN2*sizeof(double));
 	double * deriv2 = malloc(HIDDEN2*sizeof(double));
 	for (int row = 0; row < HIDDEN2; row++) {
-		sum = bias[1];
+		sum = bias[1][row];
 		for (int col = 0; col < HIDDEN1; col++) {
 			sum += res1[col]*w2[row][col];
 		}
@@ -303,7 +309,7 @@ void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, c
 	double * res3 = malloc(OUTPUT*sizeof(double));
 	double * deriv3 = malloc(OUTPUT*sizeof(double));
 	for (int row = 0; row < OUTPUT; row++) {
-		sum = 0;
+		sum = bias[2][row];
 		for (int col = 0; col < HIDDEN2; col++) {
 			sum += res2[col]*out[row][col];
 		}
@@ -345,16 +351,23 @@ void trainNN(double** w1, double** w2, double** out, double*bias, int ** data, c
 	for (int row = 0; row < HIDDEN1; row++) //for each node in the first hidden layer
 		for (int col = 0; col < INPUT; col++)
 			w1[row][col] += learningRate*h1_e[row]*deriv1[row]*data[col/SUBWIDTH][col%SUBWIDTH];
+	//Also update bias weights for first layer
+	for (int row = 0; row < HIDDEN1; row++)
+		bias[0][row] += learningRate*deriv1[row];
 	//Now update weights in w2
 	for (int row = 0; row < HIDDEN2; row++) //for each node in the second hidden layer
 		for (int col = 0; col < HIDDEN1; col++)
 			w2[row][col] += learningRate*h2_e[row]*deriv2[row]*res1[col];
+	//Also update bias weights for second layer
+	for (int row = 0; row < HIDDEN2; row++)
+		bias[1][row] += learningRate*deriv2[row];
 	//Now update weights in out
 	for (int row = 0; row < OUTPUT; row++) //for each node in the output layer
 		for (int col = 0; col < HIDDEN2; col++)
 			out[row][col] += learningRate*result_e[row]*deriv3[row]*res2[col];
-	//Finally update the bias nodes
-		//Just gonna ignore them soz
+	//Also update bias weights for output
+	for (int row = 0; row < OUTPUT; row++)
+		bias[2][row] += learningRate*deriv3[row];
 	//I think we're done (phew) just free all the allocated shit
 	free(result);
 	free(result_e);
