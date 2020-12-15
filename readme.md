@@ -23,7 +23,7 @@ Recommended initial values:
 	rateAdjustment = 0.95
 	batchSize = 30
 	inputFile = in.txt
-	
+
 If no input file is supplied you can run manually, commands are:
 ```		train data/train/<number>_<variant>```
 			- where number element of [0,9] and variant element of [00,79] (note 2 digits)
@@ -41,3 +41,4 @@ To vary a parameter and obtain graphs of the results, have a look at the shell s
 
 ## Other files
 gen.py is used to generate in.txt
+Makefile just compiles, run ```make```
