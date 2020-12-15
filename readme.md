@@ -25,9 +25,12 @@ Recommended initial values:
 	inputFile = in.txt
 
 If no input file is supplied you can run manually, commands are:
+
 ```		train data/train/<number>_<variant>```
 			- where number element of [0,9] and variant element of [00,79] (note 2 digits)
+
 ```		run <path_to_file>```
+
 ```		validate```
 			- runs all test data against current trained model, and prints probabilities of each digit and guesses which it is
 
