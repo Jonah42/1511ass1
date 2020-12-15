@@ -1,6 +1,7 @@
 # Single-Digit Image Recognition Implemented in C
 
 This project aims to explore exactly how a NN works by constructing a MLP from scratch in C.
+Currently 80-85% accurate.
 
 ## Input Data
 .pbm files, consistently 50x70 pixels. A pool of 1000 test images is divided 80-20 into train and test data respectively.
@@ -11,14 +12,18 @@ The MLP is a 3 layer network (2 hidden layers). It uses an ReLU activation funct
 
 ## Usage
 From root directory:
+
 ```bin/NN <nodesLayer1> <nodesLayer2> <learningRate> <rateAdjustment> <batchSize> <inputFile>```
+
 Recommended initial values:
+
 	nodesLayer1 = 300
 	nodesLayer2 = 100
 	learningRate = 0.01
 	rateAdjustment = 0.95
 	batchSize = 30
 	inputFile = in.txt
+	
 If no input file is supplied you can run manually, commands are:
 ```		train data/train/<number>_<variant>```
 			- where number element of [0,9] and variant element of [00,79] (note 2 digits)
