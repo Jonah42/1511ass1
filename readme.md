@@ -42,6 +42,9 @@ The program prints the probability of each digit, as well as a guess which is ju
 Piping the output to plot.py will plot the output (or rather save a plot of it). This is designed for the ```validate``` command only. Note there is a variable printed on line 64 of NN.c - this is designed to be the variable you vary when experimenting. Change it based on what you're varying. This variable is used to determine the name of the saved graph.
 To vary a parameter and obtain graphs of the results, have a look at the shell script files, notably nodes.sh (the others need to be updated to reflect extra args)
 
+## Run in the browser
+A pretrained network is implemented in digit.html, run it locally and give the page access to your webcam in order to test out the digit recognition in real life. Click "Captcha!" to analyse the current frame from the webcam, the frame is shown at the bottom of the page and the guess displayed next to the button. Works best with black texta on white background, centred. The algo dilates the black pixels, so you don't need to worry about texta thickness
+
 ## Other files
 gen.py is used to generate in.txt
 
