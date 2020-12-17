@@ -36,7 +36,7 @@ int HIDDEN2;
 int ** loadInput(char * inFile);
 double* runNN(double** w1, double** w2, double** out, double** bias, int ** data);
 void trainNN(double** w1, double** w2, double** out, double** bias, int ** data, char expected, double learningRate);
-void printWeights(double** w1, double** w2, double** out, int count);
+void printWeights(double** w1, double** w2, double** out, int count, double **bias);
 
 int main(int argc, char * argv[]) {
 	//Create a 2 layer NN with weights for each layer in arrays. There will be HIDDEN1 nodes in the first layer, HIDDEN2 in the second and 10 output nodes.
@@ -120,9 +120,9 @@ int main(int argc, char * argv[]) {
 			free(data);
 			trainCount++;
 			//Update learningRate every so often
-			if (trainCount >= batch) {
+			if (trainCount%batch == 0) {
 				learningRate *= rateAdjustment;
-				trainCount = 0;
+				// trainCount = 0;
 			}
 			// printf("Finished training\n");
 		} else if (strcmp(action, "run") == 0) {
@@ -165,6 +165,7 @@ int main(int argc, char * argv[]) {
 					if (guess == i) correct++;
 				}
 			}
+			if (trainCount >= 1600) printWeights(w1, w2, out, trainCount, bias);
 			printf("%lf\n", correct/200.0); //200 test images
 		} else if (strcmp(action, "test")) {
 			// Not implemented yet
@@ -191,7 +192,7 @@ int main(int argc, char * argv[]) {
 }
 
 // Function to print the weight matrices to individual files when debugging
-void printWeights(double** w1, double** w2, double** out, int count) {
+void printWeights(double** w1, double** w2, double** out, int count, double** bias) {
 	char name[100];
 	sprintf(name, "debug/%d_w1.txt", count);
 	FILE* fp = fopen(name, "w");
@@ -200,8 +201,9 @@ void printWeights(double** w1, double** w2, double** out, int count) {
 		exit(0);
 	}
 	for (int row = 0; row < HIDDEN1; row++) {
+		fprintf(fp, "[");
 		for (int col = 0; col < INPUT; col++)
-			fprintf(fp, "%lf ", w1[row][col]);
+			fprintf(fp, "%lf, ", w1[row][col]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
@@ -213,7 +215,7 @@ void printWeights(double** w1, double** w2, double** out, int count) {
 	}
 	for (int row = 0; row < HIDDEN2; row++) {
 		for (int col = 0; col < HIDDEN1; col++)
-			fprintf(fp, "%lf ", w2[row][col]);
+			fprintf(fp, "%lf, ", w2[row][col]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
@@ -225,9 +227,25 @@ void printWeights(double** w1, double** w2, double** out, int count) {
 	}
 	for (int row = 0; row < OUTPUT; row++) {
 		for (int col = 0; col < HIDDEN2; col++)
-			fprintf(fp, "%lf ", out[row][col]);
+			fprintf(fp, "%lf, ", out[row][col]);
 		fprintf(fp, "\n");
 	}
+	fclose(fp);
+	sprintf(name, "debug/%d_bias.txt", count);
+	fp = fopen(name, "w");
+	if (fp == NULL) {
+		printf("Failed to open file\n");
+		exit(0);
+	}
+	for (int col = 0; col < HIDDEN1; col++)
+		fprintf(fp, "%lf, ", bias[0][col]);
+	fprintf(fp, "\n");
+	for (int col = 0; col < HIDDEN2; col++)
+		fprintf(fp, "%lf, ", bias[1][col]);
+	fprintf(fp, "\n");
+	for (int col = 0; col < OUTPUT; col++)
+		fprintf(fp, "%lf, ", bias[2][col]);
+	fprintf(fp, "\n");
 	fclose(fp);
 }
 

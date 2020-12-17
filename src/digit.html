@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display Webcam Stream</title>
+ 
+<style>
+#video-container {
+	margin: 0px auto;
+	width: 500px;
+	height: 375px;
+	border: 10px #333 solid;
+}
+#videoElement {
+	width: 500px;
+	height: 375px;
+	background-color: #666;
+}
+#guess-container {
+	margin: 0px auto;
+	width: 500px;
+	height: 100px;
+}
+button {
+	width: 25%;
+	margin: 12.5%;
+	height: 30px;
+	display: inline;
+}
+h1 {
+	width: 25%;
+	display: inline;
+}
+canvas {
+
+}
+</style>
+</head>
+ 
+<body>
+<div id="video-container">
+	<video autoplay="true" id="videoElement">
+	
+	</video>
+</div>
+<div id="guess-container">
+	<button>Captcha!</button>
+	<h1 id="guess">guess</h1>
+</div>
+<canvas></canvas>
+<script src="weights.js"></script>>
+<script>
+	let cap;
+	let canvas = document.querySelector("canvas");
+	let video = document.querySelector("#videoElement");
+	let button = document.querySelector("button");
+	let context = canvas.getContext("2d");
+	let text = document.querySelector("h1");
+	button.addEventListener('click', takePhoto);
+
+	if (navigator.mediaDevices.getUserMedia) {
+	  navigator.mediaDevices.getUserMedia({ video: true })
+	    .then(function (stream) {
+	      video.srcObject = stream;
+	      const track = stream.getVideoTracks()[0];
+	      cap = new ImageCapture(track);
+	    })
+	    .catch(function (err0r) {
+	      console.log("Something went wrong!");
+	    });
+	}
+
+	function takePhoto() {
+		cap.grabFrame().then((frame) => {
+			canvas.style.width = `${frame.width}px`;
+			canvas.style.height = `${frame.height}px`;
+			drawCanvas(canvas, frame);
+			let data = context.getImageData(0,0,frame.width,frame.height);
+			console.log(data);
+			NN(data);
+		})
+		
+	}
+
+	function drawCanvas(canvas, img) {
+	  canvas.width = getComputedStyle(canvas).width.split('px')[0];
+	  canvas.height = getComputedStyle(canvas).height.split('px')[0];
+	  let ratio  = Math.min(canvas.width / img.width, canvas.height / img.height);
+	  let x = (canvas.width - img.width * ratio) / 2;
+	  let y = (canvas.height - img.height * ratio) / 2;
+	  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+	  canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
+	      x, y, img.width * ratio, img.height * ratio);
+	}
+
+	function NN(image) {
+		//Convert from image (640*480) to NN input (25*35) and scale down to binary pixels
+		let data = [];
+		for (let row = 0; row < 35; row++) {
+			let tmp = [];
+			for (let col = 12; col < 37; col++) {
+				let sum = 0;
+				for (let i = 0; i < 13; i++) {
+					for (let j = 0; j < 13; j++) {
+						let tmp = image.data[row*13*(4*640)+col*13*4]+image.data[row*13*(4*640)+col*13*4+1]+image.data[row*13*(4*640)+col*13*4+2];
+						sum += tmp/3 > 100 ? 0 : 1;
+					}
+				}
+				sum;
+				tmp.push(sum >= 1 ? 1 : 0);
+			}
+			data.push(tmp);
+		}
+		data = psf(data);
+		console.log(data);
+		let guess = runNN(data);
+		console.log(guess);
+		text.textContent = `${guess}`;
+	}
+
+	function psf(data) {
+		let newData = [];
+		for (let row = 0; row < 35; row++) {
+			let tmp = [];
+			for (let col = 0; col < 25; col++) {
+				tmp.push(0);
+			}
+			newData.push(tmp);
+		}
+		for (let row = 0; row < 35; row++) {
+			for (let col = 0; col < 25; col++) {
+				let set = false;
+				for (let i = (row == 0?0:row-1); i <= (row==34?row:row+1); i++) {
+					for (let j = (col==0?0:col-1); j <= (col==24?col:col+1); j++) {
+						if (data[i][j] === 1) {
+							set = true;
+						}
+					}
+				}
+				if (set) {
+					newData[row][col] = 1
+				}
+				// console.log(set);
+			}
+		}
+		return newData;
+	}
+
+	function runNN(data) {
+		let HIDDEN1 = 300;
+		let HIDDEN2 = 100;
+		let OUTPUT = 10;
+		let INPUT = 875;
+		let SUBWIDTH = 25;
+		let SUBHEIGHT = 35;
+		let result = [];
+		let res1 = [];
+		let res2 = [];
+		let res3 = [];
+		let sum = 0;
+		let total = 0;
+		for (let row = 0; row < HIDDEN1; row++) {
+			sum = bias[0][row];
+			for (let col = 0; col < INPUT; col++) {
+				sum += data[Math.floor(col/SUBWIDTH)][col%SUBWIDTH]*w1[row][col];
+			}
+			res1.push(sum > 0 ? sum : 0);
+		}
+		for (let row = 0; row < HIDDEN2; row++) {
+			sum = bias[1][row];
+			for (let col = 0; col < HIDDEN1; col++) {
+				sum += res1[col]*w2[row][col];
+			}
+			res2.push(sum > 0 ? sum : 0);
+		}
+		for (let row = 0; row < OUTPUT; row++) {
+			sum = bias[2][row];
+			for (let col = 0; col < HIDDEN2; col++) {
+				sum += res2[col]*out[row][col];
+			}
+			res3.push(Math.exp(sum));
+			total += Math.exp(sum);
+		}
+		for (let i = 0; i < OUTPUT; i++) {
+			result.push(res3[i]/total);
+		}
+		console.log(result);
+		let guess = 0;
+		for (let i = 0; i < OUTPUT; i++) {
+			if (result[guess] < result[i]) {
+				guess = i;
+			}
+		}
+		return guess;
+	}
+</script>
+</body>
+</html>

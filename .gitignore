@@ -1,2 +1,8 @@
 .DS_Store
 expected.txt
+tmp.txt
+package-lock.json
+package.json
+helloworld.c
+debug
+node_modules
