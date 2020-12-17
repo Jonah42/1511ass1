@@ -43,7 +43,7 @@ Piping the output to plot.py will plot the output (or rather save a plot of it).
 To vary a parameter and obtain graphs of the results, have a look at the shell script files, notably nodes.sh (the others need to be updated to reflect extra args)
 
 ## Run in the browser
-A pretrained network is implemented in digit.html, run it locally and give the page access to your webcam in order to test out the digit recognition in real life. Click "Captcha!" to analyse the current frame from the webcam, the frame is shown at the bottom of the page and the guess displayed next to the button. Works best with black texta on white background, centred. The algo dilates the black pixels, so you don't need to worry about texta thickness
+A pretrained network is implemented in src/digit.html, run it locally and give the page access to your webcam in order to test out the digit recognition in real life. Click "Captcha!" to analyse the current frame from the webcam, the frame is shown at the bottom of the page and the guess displayed next to the button. Works best with black texta on white background, centred. The algo dilates the black pixels, so you don't need to worry about texta thickness
 
 ## Other files
 gen.py is used to generate in.txt
